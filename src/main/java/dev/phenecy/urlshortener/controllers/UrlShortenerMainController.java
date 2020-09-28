@@ -75,16 +75,23 @@ public class UrlShortenerMainController {
             char[] alphabet = "0123456789abcdefghijklmnopqrstuvwxyz".toCharArray();
             int size = 5;
 
-            if (stringRedisTemplate.opsForValue().get(url) != null) {
-                // Creating the unique hash ID
+            /* Not working on local redis version
+               won't search values without keys :(
+
+             if (stringRedisTemplate.opsForValue().get(url) != null) {
                 String urlId = NanoIdUtils.randomNanoId(random, alphabet, size);
-                // Creating the value on Redis DB with urlId as a key,
-                // and full URL as a value
                 stringRedisTemplate.opsForValue().set(urlId, url);
                 return urlId;
             } else {
                 throw new RuntimeException("URL is already shortened/exists");
-            }
+            } */
+
+            // Creating the unique hash ID
+            String urlId = NanoIdUtils.randomNanoId(random, alphabet, size);
+            // Creating the value on Redis DB with urlId as a key,
+            // and full URL as a value
+            stringRedisTemplate.opsForValue().set(urlId, url);
+            return urlId;
 
         } else
 
