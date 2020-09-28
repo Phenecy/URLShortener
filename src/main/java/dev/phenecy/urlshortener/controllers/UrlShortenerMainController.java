@@ -29,8 +29,16 @@ public class UrlShortenerMainController {
     @GetMapping("/{urlId}")
     public void urlRedirecting(HttpServletResponse httpServletResponse, @PathVariable String urlId) {
 
+        if (urlId.isEmpty() || urlId.isBlank()) {
+            throw new RuntimeException("Path variable either empty or blank");
+        }
+
         // Getting the full URL based on URL ID
         String fullUrl = stringRedisTemplate.opsForValue().get(urlId);
+
+        if (fullUrl == null) {
+            throw new RuntimeException("No shorter URL for such value");
+        }
         // Redirecting to site via full URL
         httpServletResponse.setHeader("Location", fullUrl);
         httpServletResponse.setStatus(302);
@@ -39,8 +47,17 @@ public class UrlShortenerMainController {
     // GET on accessing to full URL raw data
     @GetMapping("/{urlId}/info")
     public String getFullURL(@PathVariable String urlId) {
+
+        if (urlId.isEmpty() || urlId.isBlank()) {
+            throw new RuntimeException("Path variable either empty or blank");
+        }
+
         // Getting the full URL based on URL ID
         String fullUrl = stringRedisTemplate.opsForValue().get(urlId);
+
+        if (fullUrl == null) {
+            throw new RuntimeException("No shorter URL for such value");
+        }
         // Returning the RAW URL Data
         return fullUrl;
     }
@@ -58,12 +75,17 @@ public class UrlShortenerMainController {
             char[] alphabet = "0123456789abcdefghijklmnopqrstuvwxyz".toCharArray();
             int size = 5;
 
-            // Creating the unique hash ID
-            String urlId = NanoIdUtils.randomNanoId(random, alphabet, size);
-            // Creating the value on Redis DB with urlId as a key,
-            // and full URL as a value
-            stringRedisTemplate.opsForValue().set(urlId, url);
-            return urlId;
+            if (stringRedisTemplate.opsForValue().get(url) != null) {
+                // Creating the unique hash ID
+                String urlId = NanoIdUtils.randomNanoId(random, alphabet, size);
+                // Creating the value on Redis DB with urlId as a key,
+                // and full URL as a value
+                stringRedisTemplate.opsForValue().set(urlId, url);
+                return urlId;
+            } else {
+                throw new RuntimeException("URL is already shortened/exists");
+            }
+
         } else
 
             // In case URL is corrupted or incorrect in some ways
